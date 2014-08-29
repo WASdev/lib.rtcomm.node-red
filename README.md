@@ -17,5 +17,6 @@ npm install node-red-contrib-rtcomm
 Note: specific releases of this repository can be installed via the following command:
 npm install node-red-contrib-rtcomm@<version>
 
-See the wiki page for what versions have been tested with specific versions of the WebSphere Liberty profile.
+See the wiki page for what versions have been tested with specific versions of the 
+WebSphere Liberty profile.
 ```
