@@ -68,7 +68,7 @@ module.exports = function(RED) {
         // Filter Callback
         var processMessage = function processMessage(topic, message) {
           var msg = {};
-          node.log('.processMessage('+topic+')+ '+message);
+          //node.log('.processMessage('+topic+')+ '+message);
           try {
             msg.payload = JSON.parse(message);
           } catch(e) {
@@ -78,7 +78,7 @@ module.exports = function(RED) {
           if (match &&
               typeof msg.payload === 'object' &&
               msg.payload.method === 'RTCOMM_EVENT_FIRED' ) {
-            console.log('MATCH ARRAY'+match);
+            //console.log('MATCH ARRAY'+match);
             msg.topic = topic;
             msg.payload.category = match[1] || 'unknown';
             msg.payload.action = match[2]|| 'unknown';
@@ -144,8 +144,12 @@ module.exports = function(RED) {
             'port': this.brokerConfig.port,
             'topic': this.topic};
           
-          var thirdPCC = this.thirdPCC = rtcomm3PCC.get(config,function(result){
-												console.log('restul:'+result);});
+          var thirdPCC = this.thirdPCC = rtcomm3PCC.get(config,function(message){
+ 										if (message.result == 'SUCCESS')
+											{node.log('3PCC call INITIATED successfully');}
+										else
+											{node.error('3PCC call FAILED with reason:' + message.reason);}
+									});
           
 		  thirdPCC.on('connected',function(){
               node.log('connected');
@@ -155,12 +159,8 @@ module.exports = function(RED) {
               node.log('disconnected');
               node.status({fill:"red",shape:"ring",text:"disconnected"});
           });
-          thirdPCC.on('error',function(){
-              node.log('error');
-              node.status({fill:"red",shape:"ring",text:"error"});
-          });
 
-		  this.on('input', function(msg) {
+          this.on('input', function(msg) {
             if (typeof msg.payload === 'object') {
 				node.log('.input callerEndpointID:'+msg.payload.callerEndpointID);
 				node.log('.input calleeEndpointID:'+msg.payload.calleeEndpointID);
