@@ -126,6 +126,22 @@ module.exports = function(RED) {
     };
 
     var rtcomm3PCC = require('rtcomm').ThirdPartyCC;
+    
+    /*
+     * Generate a Random UUID
+     */ 
+    var generateUUID = function generateUUID() {
+        /*jslint bitwise: true */
+        var d = new Date().getTime();
+        var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = (d + Math.random()*16)%16 | 0;
+            d = Math.floor(d/16);
+            return (c==='x' ? r : (r&0x7|0x8)).toString(16);
+        }); 
+        return uuid;
+    };
+
+	var transList = {};
 
     // The 3PCC node definition
 	function Rtcomm3PCCNode(n) {
@@ -145,11 +161,39 @@ module.exports = function(RED) {
             'topic': this.topic};
           
           var thirdPCC = this.thirdPCC = rtcomm3PCC.get(config,function(message){
- 										if (message.result == 'SUCCESS')
-											{node.log('3PCC call INITIATED successfully');}
-										else
-											{node.error('3PCC call FAILED with reason:' + message.reason);}
-									});
+        	  							var nodeRedMsg;
+        	  							var transID = message.transID;
+        	  							var trans = transList[transID];
+        	  							
+        	  							if (trans == null)
+        	  							{
+        	  								node.error("ERROR: Unknown transID received from nodeModule");
+        	  								return;
+        	  							}
+        	  							
+        	  							if (message.result == 'SUCCESS')
+        	  							{
+											node.log('3PCC call INITIATED successfully');
+    	  									nodeRedMsg = {'payload' : {
+    	  													'result' : 'SUCCESS',
+    	  													'callerEndpointID' : trans.callerEndpointID,
+    	  													'calleeEndpointID' : trans.calleeEndpointID,
+    	  													'sigSessionID' : trans.sigSessionID}
+    	  												};
+        	  							}
+        	  							else
+        	  							{
+											node.error('3PCC call FAILED with reason:' + message.reason);
+    	  									nodeRedMsg = {'payload' : {
+													'result' : 'FAILURE',
+													'reason' : message.reason,
+													'callerEndpointID' : trans.callerEndpointID,
+													'calleeEndpointID' : trans.calleeEndpointID,
+													'sigSessionID' : trans.sigSessionID}
+											};
+        	  							}
+        	  							node.send(nodeRedMsg);
+									}.bind(this));
           
 		  thirdPCC.on('connected',function(){
               node.log('connected');
@@ -162,17 +206,35 @@ module.exports = function(RED) {
 
           this.on('input', function(msg) {
             if (typeof msg.payload === 'object') {
-				node.log('.input callerEndpointID:'+msg.payload.callerEndpointID);
-				node.log('.input calleeEndpointID:'+msg.payload.calleeEndpointID);
-		  
-				this.thirdPCC.startCall(msg.payload.callerEndpointID,msg.payload.calleeEndpointID);
+
+            	if (msg.payload.callerEndpointID && msg.payload.calleeEndpointID){
+					node.log('.input callerEndpointID:'+msg.payload.callerEndpointID);
+					node.log('.input calleeEndpointID:'+msg.payload.calleeEndpointID);
+					
+					var sigSessionID = null;
+					if (msg.payload.sigSessionID)
+						sigSessionID = msg.payload.sigSessionID;
+			  
+					var transID = generateUUID();
+					transList[transID] = {
+									'callerEndpointID': msg.payload.callerEndpointID,
+									'calleeEndpointID': msg.payload.calleeEndpointID,
+									'sigSessionID' : sigSessionID
+									};
+						
+					//	FIX: Currently passing in null for session ID. Should allow this to be input on the node.
+					this.thirdPCC.startCall(msg.payload.callerEndpointID,msg.payload.calleeEndpointID, sigSessionID, transID);
+            	}
+            	else{
+                   	node.error('msg.payload does not include callerEndpointID or calleeEndpointID: ' +  msg); 
+            	}
 			}
 			else {
-              node.error('Unable to create 3PCC for: '+ msg); 
+              node.error('msg.payload is not an Object. Unable to create 3PCC for: '+ msg); 
             }
-		  });
+		  }.bind(this));
 		  
-		  // Start the monitor
+		  // Start the 3PCC Node
           thirdPCC.start();
         } else {
           this.error("missing broker configuration");
