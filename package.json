@@ -1,6 +1,6 @@
 {
     "name"          : "node-red-contrib-rtcomm",
-    "version"       : "v1.0.0-beta.2",
+    "version"       : "v1.0.0-beta.3",
     "description"   : "Node-RED nodes that interface with Rtcomm services from a WebSphere Liberty Profile Server.",
     "dependencies"  : {
         "rtcomm"   : "v1.0.0-beta.2"

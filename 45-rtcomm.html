@@ -99,7 +99,7 @@
 <!-- The example below shows a small subset of the properties that can be set-->
 <script type="text/javascript">
     RED.nodes.registerType('rtcomm event',{
-        category: 'input',      // the palette category
+        category: 'social-output',      // the palette category
         defaults: {             // defines the editable properties of the node
             name: {value:""},
             topic: {value:"",required:true},
@@ -146,7 +146,7 @@
 
 <!-- Next, some simple help text is provided for the node.                   -->
 <script type="text/x-red" data-help-name="rtcomm 3PCC">
-  <p>Output node used to initiate a call between two endpoints.</p>
+  <p>Node used to initiate a call between two endpoints.</p>
    <p>Input an object called <b>msg</b> containing <b>msg.payload</b>.</p>
    <p><b>msg.payload</b> is a JSON Object that contains the following: </p>
    
@@ -163,27 +163,58 @@
 			<td>calleeEndpointID</td>
 			<td>Terminating endpoint ID</td>
 		</tr>
+		<tr>
+			<td>sigSessionID</td>
+			<td>OPTIONAL: UUID to be used for the signaling session.</td>
+		</tr>
 	</table>
    
    <br>
    <p>All outbound 3PCC messages are published to the topic configured for the node.</p>
+   <p>This node outputs the result of the 3PCC call request. Format of the output message is:</p>
+
+	<table border="1">
+		<tr>
+			<th>key</th>
+			<th>value</th>
+		</tr>
+		<tr>
+			<td>result</td>
+			<td>Either SUCCESS or FAILURE</td>
+		</tr>
+		<tr>
+			<td>reason</td>
+			<td>When a failure occurs this provides the reason why.</td>
+		</tr>
+		<tr>
+			<td>callerEndpointID</td>
+			<td>Initiating endpoint ID for the 3PCC call.</td>
+		</tr>
+		<tr>
+			<td>calleeEndpointID</td>
+			<td>Terminating endpoint ID for the 3PCC call.</td>
+		</tr>
+		<tr>
+			<td>sigSessionID</td>
+			<td>UUID for the 3PCC call.</td>
+		</tr>
+	</table>
+
 </script>
 
 <!-- Finally, the node type is registered along with all of its properties   -->
 <!-- The example below shows a small subset of the properties that can be set-->
 <script type="text/javascript">
     RED.nodes.registerType('rtcomm 3PCC',{
-        category: 'output',      // the palette category
+        category: 'social-input',      // the palette category
         defaults: {             // defines the editable properties of the node
             name: {value:""},
             topic: {value:"",required:true},
-            broker: {type:"mqtt-broker", required:true},
-            callerendpoint: {value:""},
-            calleeendpoint: {value:""}
+            broker: {type:"mqtt-broker", required:true}
         },
         color:"#bfbfd8",
         inputs:1,               // set the number of inputs - only 0 or 1
-        outputs:0,              // set the number of outputs - 0 to n
+        outputs:1,              // set the number of outputs - 0 to n
         // set the icon (held in icons dir below where you save the node)
         icon: "inject.png",     // saved in  icons/myicon.png
         label: function() {     // sets the default label contents
