@@ -18,15 +18,15 @@
 module.exports = function(RED) {
   "use strict";
   
-  var rtcommEventMonitor = require('rtcomm').EventMonitor;
+  var rtcommRtcConnector = require('rtcomm').RtcConnector;
 
-   // The event monitor node definition
-  function RtcommEventMonitorNode(n) {
+   // The rtcomm RtcConnector node definition
+  function RtcommRtcConnectorNode(n) {
       RED.nodes.createNode(this,n);
       this.topic = n.topic || '/rtcomm/event';
       this.broker = n.broker;
       this.brokerConfig = RED.nodes.getNode(this.broker);
-      this.eventMonitor = null;
+      this.rtcConnector = null;
 
   //	This defines the event filter
       this.registration = n.registration || false;
@@ -48,22 +48,22 @@ module.exports = function(RED) {
           'port': this.brokerConfig.port,
            'eventPath': this.topic,
            'unique': unique};
-        var eventMonitor = this.eventMonitor = rtcommEventMonitor.get(config);
-        eventMonitor.on('connected',function(){
+        var rtcConnector = this.rtcConnector = rtcommRtcConnector.get(config);
+        rtcConnector.on('connected',function(){
             node.log('connected');
             node.status({fill:"green",shape:"dot",text:"connected"});
         });
-        eventMonitor.on('disconnected',function(){
+        rtcConnector.on('disconnected',function(){
             node.log('disconnected');
             node.status({fill:"red",shape:"ring",text:"disconnected"});
         });
-        eventMonitor.on('error',function(){
+        rtcConnector.on('error',function(){
             node.log('error');
             node.status({fill:"red",shape:"ring",text:"error"});
         });
 
         // Start the monitor
-        eventMonitor.start();
+        rtcConnector.start();
 
         // Filter Callback
         var processMessage = function processMessage(topic, message) {
@@ -95,7 +95,7 @@ module.exports = function(RED) {
           }
           node.send(msg);
         };
-        this.filter = eventMonitor.addFilter({
+        this.filter = rtcConnector.addFilter({
           'category': {
             'session': this.session, 
             'registration':this.registration },
@@ -116,13 +116,13 @@ module.exports = function(RED) {
 
     // Register the node by name. This must be called before overriding any of the
     // Node functions.
-    RED.nodes.registerType("rtcomm event",RtcommEventMonitorNode);
+    RED.nodes.registerType("rtcomm conn",RtcommRtcConnectorNode);
 	
-    RtcommEventMonitorNode.prototype.close = function() {
+    RtcommRtcConnectorNode.prototype.close = function() {
         if (this.filter) {
-          this.eventMonitor.removeFilter(this.filter);
+          this.rtcConnector.removeFilter(this.filter);
         }
-        this.eventMonitor.stop();
+        this.rtcConnector.stop();
     };
 
     var rtcomm3PCC = require('rtcomm').ThirdPartyCC;
