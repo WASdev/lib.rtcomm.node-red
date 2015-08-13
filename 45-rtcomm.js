@@ -146,7 +146,7 @@ module.exports = function(RED) {
     // The 3PCC node definition
 	function Rtcomm3PCCNode(n) {
         RED.nodes.createNode(this,n);
-        this.topic = n.topic || '/rtcomm/ThirdPartyCC';
+        this.topic = (n.topic || '/rtcomm/') + 'callControl';
         this.broker = n.broker;
         this.brokerConfig = RED.nodes.getNode(this.broker);
         this.thirdPCC = null;
