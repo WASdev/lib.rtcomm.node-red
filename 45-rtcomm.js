@@ -23,14 +23,13 @@ module.exports = function(RED) {
    // The rtcomm RtcConnector node definition
   function RtcommRtcConnectorNode(n) {
       RED.nodes.createNode(this,n);
-      this.topic = n.topic || '/rtcomm/event';
+      this.topic = (n.topic || '/rtcomm/')+'event';
       this.broker = n.broker;
       this.brokerConfig = RED.nodes.getNode(this.broker);
       this.rtcConnector = null;
 
   //	This defines the event filter
-      this.registration = n.registration || false;
-      this.session = n.session || false;
+      
       this.started = n.started || false;
       this.failed = n.failed || false;
       this.modified = n.modified || false;
@@ -74,7 +73,7 @@ module.exports = function(RED) {
           } catch(e) {
             node.error("Message cannot be parsed as an Object: "+message);
           }
-          var match = /\/(session|registration)\/(started|stopped|modified|failed)\/(.+$)/.exec(topic);
+          var match = /\/(session)\/(started|stopped|modified|failed)\/(.+$)/.exec(topic);
           if (match &&
               typeof msg.payload === 'object' &&
               msg.payload.method === 'RTCOMM_EVENT_FIRED' ) {
@@ -97,8 +96,8 @@ module.exports = function(RED) {
         };
         this.filter = rtcConnector.addFilter({
           'category': {
-            'session': this.session, 
-            'registration':this.registration },
+            'session': true 
+            },
            'action': {
              'started':this.started,
              'modified':this.modified,
@@ -116,7 +115,7 @@ module.exports = function(RED) {
 
     // Register the node by name. This must be called before overriding any of the
     // Node functions.
-    RED.nodes.registerType("rtcomm conn",RtcommRtcConnectorNode);
+    RED.nodes.registerType("rtcomm event",RtcommRtcConnectorNode);
 	
     RtcommRtcConnectorNode.prototype.close = function() {
         if (this.filter) {
@@ -146,7 +145,7 @@ module.exports = function(RED) {
     // The 3PCC node definition
 	function Rtcomm3PCCNode(n) {
         RED.nodes.createNode(this,n);
-        this.topic = n.topic || '/rtcomm/ThirdPartyCC';
+        this.topic = (n.topic || '/rtcomm/') + 'callControl';
         this.broker = n.broker;
         this.brokerConfig = RED.nodes.getNode(this.broker);
         this.thirdPCC = null;
