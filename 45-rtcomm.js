@@ -70,6 +70,7 @@ module.exports = function(RED) {
           //node.log('.processMessage('+topic+')+ '+message);
           try {
             msg.payload = JSON.parse(message);
+			var timestamp = msg.payload.timestamp;
           } catch(e) {
             node.error("Message cannot be parsed as an Object: "+message);
           }
@@ -78,8 +79,9 @@ module.exports = function(RED) {
               typeof msg.payload === 'object' &&
               msg.payload.method === 'RTCOMM_EVENT_FIRED' ) {
             //console.log('MATCH ARRAY'+match);
+            msg.payload={};
             msg.topic = topic;
-            msg.payload.category = match[1] || 'unknown';
+			msg.payload.timestamp=timestamp;
             msg.payload.action = match[2]|| 'unknown';
 
             var m = /\//.test(match[3]) ? /(.+)\/(.+)/.exec(match[3]) : [null, match[3], null];
