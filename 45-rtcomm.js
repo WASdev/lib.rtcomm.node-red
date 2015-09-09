@@ -23,14 +23,13 @@ module.exports = function(RED) {
    // The rtcomm RtcConnector node definition
   function RtcommRtcConnectorNode(n) {
       RED.nodes.createNode(this,n);
-      this.topic = n.topic || '/rtcomm/event';
+      this.topic = (n.topic || '/rtcomm/')+'event';
       this.broker = n.broker;
       this.brokerConfig = RED.nodes.getNode(this.broker);
       this.rtcConnector = null;
 
   //	This defines the event filter
-      this.registration = n.registration || false;
-      this.session = n.session || false;
+      
       this.started = n.started || false;
       this.failed = n.failed || false;
       this.modified = n.modified || false;
@@ -74,7 +73,7 @@ module.exports = function(RED) {
           } catch(e) {
             node.error("Message cannot be parsed as an Object: "+message);
           }
-          var match = /\/(session|registration)\/(started|stopped|modified|failed)\/(.+$)/.exec(topic);
+          var match = /\/(session)\/(started|stopped|modified|failed)\/(.+$)/.exec(topic);
           if (match &&
               typeof msg.payload === 'object' &&
               msg.payload.method === 'RTCOMM_EVENT_FIRED' ) {
@@ -97,8 +96,9 @@ module.exports = function(RED) {
         };
         this.filter = rtcConnector.addFilter({
           'category': {
-            'session': this.session, 
-            'registration':this.registration },
+            'session': true,
+			'registration': false
+            },
            'action': {
              'started':this.started,
              'modified':this.modified,
@@ -116,7 +116,7 @@ module.exports = function(RED) {
 
     // Register the node by name. This must be called before overriding any of the
     // Node functions.
-    RED.nodes.registerType("rtcomm conn",RtcommRtcConnectorNode);
+    RED.nodes.registerType("rtcomm event",RtcommRtcConnectorNode);
 	
     RtcommRtcConnectorNode.prototype.close = function() {
         if (this.filter) {
@@ -247,4 +247,116 @@ module.exports = function(RED) {
       Rtcomm3PCCNode.prototype.close = function() {
           this.thirdPCC.stop();
       };
+	  
+	  
+	   var rtcommPresence = require('rtcomm').RtcConnector;
+
+   // The rtcomm Presence node definition
+  function rtcommPresenceNode(n) {
+      RED.nodes.createNode(this,n);
+	  var subtopic = n.subtopic;
+      this.topic = (n.topic || '/rtcomm/')+'sphere/'+subtopic;
+      this.broker = n.broker;
+      this.brokerConfig = RED.nodes.getNode(this.broker);
+      this.rtcConnector = null;
+	  var endpoint = n.fromendpoint; 
+	  var unique = n.unique || false;
+
+      var node = this;
+      if (this.brokerConfig) {
+         this.status({fill:"red",shape:"ring",text:"disconnected"});
+        //this.client = connectionPool.get(this.brokerConfig.broker,this.brokerConfig.port,this.brokerConfig.clientid,this.brokerConfig.username,this.brokerConfig.password);
+        var config = {
+          'server': this.brokerConfig.broker,
+          'port': this.brokerConfig.port,
+           'eventPath': this.topic,
+           'unique': unique};
+        var rtcConnector = this.rtcConnector = rtcommPresence.get(config);
+        rtcConnector.on('connected',function(){
+            node.log('connected');
+            node.status({fill:"green",shape:"dot",text:"connected"});
+        });
+        rtcConnector.on('disconnected',function(){
+            node.log('disconnected');
+            node.status({fill:"red",shape:"ring",text:"disconnected"});
+        });
+        rtcConnector.on('error',function(){
+            node.log('error');
+            node.status({fill:"red",shape:"ring",text:"error"});
+        });
+
+        // Start the monitor
+        rtcConnector.start();
+
+        // Filter Callback
+        var processMessage = function processMessage(topic, message) {
+		 
+		  var endpointStr = /([^\/]+$)/.exec(topic);
+		  var filter = endpoint; 
+		 
+			filter = filter.replace("*",".*");
+		  var reEx = new RegExp("(" +filter+")");
+		  var filterMatch = reEx.exec(endpointStr);
+		  
+		  if(filterMatch){
+          var msg = {};
+         
+		  if(message.length == 0){
+			  msg.payload = {"state":"unavailable", 'endpointID': endpointStr[1]};
+			  msg.topic = topic;
+			  node.send(msg);
+			  
+		  }
+		  else{		  
+			  try {
+            msg.payload = JSON.parse(message);
+          } catch(e) {
+            node.error("Message cannot be parsed as an Object: "+message);
+          }
+		  
+          if ( 
+              typeof msg.payload === 'object' &&
+              msg.payload.method === 'DOCUMENT' ) {	  
+        
+            msg.topic = topic;
+			msg.payload = {
+				'addressTopic': msg.payload.addressTopic,
+				'appContext': msg.payload.appContext,
+				'state': msg.payload.state,
+				'alias': msg.payload.alias,
+				'userDefines': msg.payload.userDefines,
+				'endpointID': endpointStr[1]
+			}
+			
+			
+          } else {
+            node.error('Unable to form message for topic:'+topic+' and message: '+message); 
+            msg = null;
+          }
+          node.send(msg);
+		  }
+		  }
+        };
+        this.filter = rtcConnector.addFilter({
+			'type': true ,
+			'state': true,
+			'alias': true,
+			'userDefines': true} ,processMessage);
+		   this.log('Added Filter - '+this.filter.subscriptions);
+      } else {
+        this.error("missing broker configuration");
+      }
+    }
+    // Register the node by name. This must be called before overriding any of the
+    // Node functions.
+    RED.nodes.registerType("rtcomm presence",rtcommPresenceNode);	
+    rtcommPresenceNode.prototype.close = function() {
+		 if (this.filter) {
+          this.rtcConnector.removeFilter(this.filter);
+        }
+        this.rtcConnector.stop();
+    };
+
   };
+  
+ 
