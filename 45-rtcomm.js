@@ -249,16 +249,10 @@ module.exports = function(RED) {
       };
 	  
 	  
-	  
-	  
-	  
-	  
-	  
-	  
 	   var rtcommPresenceTracking = require('rtcomm').RtcConnector;
 
-   // The rtcomm RtcConnector node definition
-  function rtcommPresenceTrackingNode(n) {
+   // The rtcomm Presence node definition
+  function rtcommPresenceNode(n) {
       RED.nodes.createNode(this,n);
 	  var subtopic = n.subtopic;
       this.topic = (n.topic || '/rtcomm/')+'sphere/'+subtopic;
@@ -266,10 +260,7 @@ module.exports = function(RED) {
       this.brokerConfig = RED.nodes.getNode(this.broker);
       this.rtcConnector = null;
 	  var endpoint = n.fromendpoint; 
-	 
-  //	This defines the event filter
-	   
-		var unique = n.unique || false;
+	  var unique = n.unique || false;
 
       var node = this;
       if (this.brokerConfig) {
@@ -302,10 +293,7 @@ module.exports = function(RED) {
 		 
 		  var endpointStr = /([^\/]+$)/.exec(topic);
 		  var filter = endpoint; 
-		  /*
-		   var match = new RegExp("\/(sphere)/("+subtopic+")\/(.+$)");
-		    node.log(match);
-			*/
+		 
 			filter = filter.replace("*",".*");
 		  var reEx = new RegExp("(" +filter+")");
 		  var filterMatch = reEx.exec(endpointStr);
@@ -329,7 +317,7 @@ module.exports = function(RED) {
           if ( 
               typeof msg.payload === 'object' &&
               msg.payload.method === 'DOCUMENT' ) {	  
-            
+        
             msg.topic = topic;
 			msg.payload = {
 				'addressTopic': msg.payload.addressTopic,
@@ -338,7 +326,6 @@ module.exports = function(RED) {
 				'alias': msg.payload.alias,
 				'userDefines': msg.payload.userDefines,
 				'endpointID': endpointStr[1]
-				
 			}
 			
 			
@@ -362,8 +349,8 @@ module.exports = function(RED) {
     }
     // Register the node by name. This must be called before overriding any of the
     // Node functions.
-    RED.nodes.registerType("rtcomm presence",rtcommPresenceTrackingNode);	
-    rtcommPresenceTrackingNode.prototype.close = function() {
+    RED.nodes.registerType("rtcomm presence",rtcommPresenceNode);	
+    rtcommPresenceNode.prototype.close = function() {
 		 if (this.filter) {
           this.rtcConnector.removeFilter(this.filter);
         }
