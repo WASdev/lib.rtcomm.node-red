@@ -249,7 +249,7 @@ module.exports = function(RED) {
       };
 	  
 	  
-	   var rtcommPresenceTracking = require('rtcomm').RtcConnector;
+	   var rtcommPresence = require('rtcomm').RtcConnector;
 
    // The rtcomm Presence node definition
   function rtcommPresenceNode(n) {
@@ -271,7 +271,7 @@ module.exports = function(RED) {
           'port': this.brokerConfig.port,
            'eventPath': this.topic,
            'unique': unique};
-        var rtcConnector = this.rtcConnector = rtcommPresenceTracking.get(config);
+        var rtcConnector = this.rtcConnector = rtcommPresence.get(config);
         rtcConnector.on('connected',function(){
             node.log('connected');
             node.status({fill:"green",shape:"dot",text:"connected"});
@@ -358,14 +358,5 @@ module.exports = function(RED) {
     };
 
   };
-  
-  
-  
-  
-  
-  
-  
-  
-  
   
  
