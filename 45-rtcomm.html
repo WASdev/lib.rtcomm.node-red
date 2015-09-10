@@ -13,14 +13,14 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<script type="text/x-red" data-template-name="rtcomm conn">
+<script type="text/x-red" data-template-name="rtcomm event">
 
    <div class="form-row">
         <label for="node-input-broker"><i class="icon-tag"></i> Broker</label>
         <input type="text" id="node-input-broker">
     </div>
     <div class="form-row">
-        <label for="node-input-topic"><i class="icon-tasks"></i> Event Topic</label>
+        <label for="node-input-topic"><i class="icon-tasks"></i> Root Topic</label>
         <input type="text" id="node-input-topic" placeholder="Topic">
     </div>
     <div class="form-row">
@@ -31,13 +31,6 @@
     <input type="checkbox" id="node-input-unique" style="display: inline-block; width: auto; vertical-align: top;"> <label style="width: auto;" for="node-input-unique">Force Unique Client</label></input>&nbsp;
   </div>
 	<hr>
-    <div class="form-row">
-        Filter event categories to capture:
-    </div>
-    <div class="form-row">
-        <input type="checkbox" id="node-input-registration" style="display: inline-block; width: auto; vertical-align: top;"> <label style="width: auto;" for="node-input-registration">Registration</label></input>&nbsp;
-        <input type="checkbox" id="node-input-session" style="display: inline-block; width: auto; vertical-align: top;"> <label style="width: auto;" for="node-input-session">Session</label></input>&nbsp;
-    </div>
     <div class="form-row">
         Filter event actions to capture:
     </div>
@@ -58,8 +51,8 @@
 </script>
 
 <!-- Next, some simple help text is provided for the rtcomm connector node. -->
-<script type="text/x-red" data-help-name="rtcomm conn">
-  <p>Input node used to receive various types of events published by an rtcomm connector running on a WebSphere Liberty server via MQTT. These
+<script type="text/x-red" data-help-name="rtcomm event">
+  <p>Input node used to receive session events published by the rtcomm feature running on a WebSphere Liberty server via MQTT. These
   events can be filtered using the configuration.</p>
    <p>Outputs an object called <b>msg</b> containing <b>msg.topic</b> and
    <b>msg.payload</b>.</p>
@@ -73,23 +66,19 @@
     <th>value</th>
   </tr>
   <tr>
-    <td>method</td>
-    <td>RTCOMM_EVENT_FIRED</td>
+    <td>timestamp </td>
+    <td>e.g. 2015-08-18 11:44:47.891</td>
   </tr>
   <tr>
-    <td>category</td>
-    <td>session| registration</td>
-  </tr>
-  <tr>
-    <td>action</td>
+    <td>action </td>
     <td>started|stopped|modified|failed</td>
   </tr>
   <tr>
-    <td>fromendpoint</td>
+    <td>fromendpointid </td>
     <td>Initiating endpoint ID</td>
   </tr>
   <tr>
-    <td>toendpoint</td>
+    <td>toendpointid </td>
     <td>Terminating endpoint ID</td>
   </tr>
 </table>
@@ -98,7 +87,7 @@
 <!-- Finally, the node type is registered along with all of its properties   -->
 <!-- The example below shows a small subset of the properties that can be set-->
 <script type="text/javascript">
-    RED.nodes.registerType('rtcomm conn',{
+    RED.nodes.registerType('rtcomm event',{
         category: 'social-output',      // the palette category
         defaults: {             // defines the editable properties of the node
             name: {value:""},
@@ -120,7 +109,7 @@
         // set the icon (held in icons dir below where you save the node)
         icon: "inject.png",     // saved in  icons/myicon.png
         label: function() {     // sets the default label contents
-            return this.name||this.topic||"rtcomm conn";
+            return this.name||"rtcomm event";
         },
         labelStyle: function() { // sets the class to apply to the label
             return this.name?"node_label_italic":"";
@@ -135,7 +124,7 @@
         <input type="text" id="node-input-broker">
     </div>
     <div class="form-row">
-        <label for="node-input-topic"><i class="icon-tasks"></i> 3PCC Topic</label>
+        <label for="node-input-topic"><i class="icon-tasks"></i> Root Topic</label>
         <input type="text" id="node-input-topic" placeholder="Topic">
     </div>
     <div class="form-row">
@@ -218,13 +207,118 @@
         // set the icon (held in icons dir below where you save the node)
         icon: "inject.png",     // saved in  icons/myicon.png
         label: function() {     // sets the default label contents
-            return this.name||this.topic||"rtcomm 3PCC";
+            return this.name||"rtcomm 3PCC";
         },
         labelStyle: function() { // sets the class to apply to the label
             return this.name?"node_label_italic":"";
         }
     });
 </script>
+
+
+<script type="text/x-red" data-template-name="rtcomm presence">
+
+   <div class="form-row">
+        <label for="node-input-broker"><i class="icon-tag"></i> Broker</label>
+        <input type="text" id="node-input-broker">
+    </div>
+    <div class="form-row">
+        <label for="node-input-topic"><i class="icon-tasks"></i> Root Topic</label>
+        <input type="text" id="node-input-topic" placeholder="Topic">
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+	<hr>
+	<div class="form-row">
+         Filters
+    </div>
+    <div class="form-row">
+        <label for="node-input-subtopic"><i class="icon-tag"></i> Subtopic:</label>
+        <input type="text" id="node-input-subtopic" placeholder="subtopic filter">
+    </div>
+    <div class="form-row">
+    </div>
+    <div class="form-row">
+        <label for="node-input-fromendpoint"><i class="icon-tag"></i> Endpoint:</label>
+        <input type="text" id="node-input-fromendpoint" placeholder="endpoint ID filter">
+    </div>
+	
+</script>
+
+<!-- Next, some simple help text is provided for the node.                   -->
+<script type="text/x-red" data-help-name="rtcomm presence">
+ <p>Input node used to monitor presence events from webrtc clients. </p>
+   <p>Outputs an object called <b>msg</b> containing <b>msg.topic</b> and
+   <b>msg.payload</b>.</p>
+   <p><b>msg.payload</b> is a JSON Object.</p>
+   <p>The <b>msg.topic</b> contains the topic name that the event was published to.</p>
+   <p>The <b>msg.payload</b> contains the following JSON object:</p>
+   
+<table border="1">
+  <tr>
+    <th>key</th>
+    <th>value</th>
+  </tr>
+  <tr>
+    <td>addressTopic </td>
+    <td>topic that the endpoint is subscribed to.</td>
+  </tr>
+  <tr>
+    <td>appContext </td>
+    <td>e.g. "XYZ video app" </td>
+  </tr>
+  <tr>
+    <td>state</td>
+    <td>i.e. "busy", "available", etc..</td>
+  </tr>
+  <tr>
+    <td>alias </td>
+    <td>endpoint alias </td>
+  </tr>
+  <tr>
+    <td>userDefines </td>
+    <td>user defined array</td>
+  </tr>
+  <tr>
+    <td>endpointID </td>
+    <td>endpoint unique identifier</td>
+  </tr>
+</table>
+
+</script>
+
+<!-- Finally, the node type is registered along with all of its properties   -->
+<!-- The example below shows a small subset of the properties that can be set-->
+<script type="text/javascript">
+     RED.nodes.registerType('rtcomm presence',{
+        category: 'social-output',      // the palette category
+        defaults: {             // defines the editable properties of the node
+            name: {value:""},
+            topic: {value:"",required:true},
+            broker: {type:"mqtt-broker", required:true},
+            unique: {value:false},
+            fromendpoint: {value:""},
+			subtopic: {value:""}
+        },
+        color:"#bfbfd8",
+        inputs:0,               // set the number of inputs - only 0 or 1
+        outputs:1,              // set the number of outputs - 0 to n
+        // set the icon (held in icons dir below where you save the node)
+        icon: "inject.png",     // saved in  icons/myicon.png
+        label: function() {     // sets the default label contents
+            return this.name||"rtcomm presence";
+        },
+        labelStyle: function() { // sets the class to apply to the label
+            return this.name?"node_label_italic":"";
+        }
+    });
+</script>
+
+
+
+
 
 
 
