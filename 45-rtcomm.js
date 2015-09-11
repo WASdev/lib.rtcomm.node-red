@@ -339,11 +339,7 @@ module.exports = function(RED) {
 		  }
 		  }
         };
-        this.filter = rtcConnector.addFilter({
-			'type': true ,
-			'state': true,
-			'alias': true,
-			'userDefines': true} ,processMessage);
+        this.filter = rtcConnector.allPresenceEvents(processMessage);
 		   this.log('Added Filter - '+this.filter.subscriptions);
       } else {
         this.error("missing broker configuration");
