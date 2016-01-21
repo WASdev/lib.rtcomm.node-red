@@ -1,3 +1,5 @@
 *.md.html
 .project
 .settings
+.DS_Store
+node_modules

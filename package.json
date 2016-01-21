@@ -1,9 +1,9 @@
 {
     "name"          : "rtcomm-red",
-    "version"       : "v1.0.0",
+    "version"       : "v1.0.1",
     "description"   : "Node-RED nodes that interface with Rtcomm services from a WebSphere Liberty Profile Server.",
     "dependencies"  : {
-        "rtcomm"   : "v1.0.0"
+        "rtcomm"   : "v1.0.1"
     },
     "license": "Apache",
     "repository" : { 
